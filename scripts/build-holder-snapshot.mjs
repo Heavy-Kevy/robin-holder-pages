@@ -170,7 +170,7 @@ function renderHolderPage(data, quote = null) {
     const units = toTokenUnits(balance);
     const usdGValue = isBurn ? "0.00" : quote ? formatRoundedUnits(units * quote.units, 36, 2) : "—";
     const share = supplySharePercent === null ? "—"
-      : supplySharePercent === "0.0000" ? "&lt;0.0001%" : `${supplySharePercent}%`;
+      : Number(supplySharePercent) < 0.005 ? "&lt;0.01%" : `${Number(supplySharePercent).toFixed(2)}%`;
     return `<tr role="row">
       <td class="rank" role="cell"><span class="mobile-label" aria-hidden="true">Rank</span>${rank}</td>
       <th class="holder-address" scope="row" role="rowheader"><a class="wallet" href="${explorer}">${address}</a></th>
