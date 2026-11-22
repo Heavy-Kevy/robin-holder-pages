@@ -164,24 +164,34 @@ function signedChange(decimal) {
   return `${negative ? "−" : "+"}${units < 5_000_000_000_000_000n ? "&lt;0.01" : formatRoundedUnits(units, 18, 2)}`;
 }
 
+function blockscoutSourceName(url) {
+  return url.hostname === "api.blockscout.com" ? "keyed API" : "public explorer";
+}
+
 async function fetchIndexedSupply(apiKey) {
   for (const url of blockscoutSources(tokenPath, apiKey)) {
+    const source = blockscoutSourceName(url);
     try {
       const upstream = await fetch(url, {
         headers: { Accept: "application/json" },
         redirect: "manual",
         signal: AbortSignal.timeout(3500),
       });
-      if (!upstream.ok) continue;
+      if (!upstream.ok) {
+        console.warn(`Blockscout token supply: ${source} returned HTTP ${upstream.status}.`);
+        continue;
+      }
       const token = await upstream.json();
       const supply = token?.total_supply;
       if (token?.address_hash?.toLowerCase() === contract.toLowerCase()
         && String(token.decimals) === "18"
         && typeof supply === "string" && /^\d{1,78}$/.test(supply) && BigInt(supply) > 0n) {
+        console.log(`Blockscout token supply: using ${source}.`);
         return supply;
       }
+      console.warn(`Blockscout token supply: ${source} returned invalid supply data.`);
     } catch {
-      // Try the next source. Holder balances can still be served without supply.
+      console.warn(`Blockscout token supply: ${source} request or response parsing failed.`);
     }
   }
   return null;
@@ -379,20 +389,27 @@ async function fetchHolderData(apiKey) {
   const sources = blockscoutSources(`${tokenPath}/holders`, apiKey);
 
   for (const url of sources) {
+    const source = blockscoutSourceName(url);
     try {
       const upstream = await fetch(url, {
         headers: { Accept: "application/json" },
         redirect: "manual",
         signal: AbortSignal.timeout(7000),
       });
-      if (!upstream.ok) continue;
+      if (!upstream.ok) {
+        console.warn(`Blockscout Top 50 holders: ${source} returned HTTP ${upstream.status}.`);
+        continue;
+      }
 
       const payload = await upstream.json();
       const rows = payload.items?.slice(0, holderLimit);
       if (rows?.length !== holderLimit || rows.some(({ address, value }) =>
         !/^0x[a-f0-9]{40}$/i.test(address?.hash ?? "") ||
         typeof value !== "string" || !/^\d{1,78}$/.test(value) || BigInt(value) === 0n
-      )) continue;
+      )) {
+        console.warn(`Blockscout Top 50 holders: ${source} returned invalid holder data.`);
+        continue;
+      }
 
       const fetchedAt = new Date().toISOString();
       const supply = await supplyPromise;
@@ -415,9 +432,10 @@ async function fetchHolderData(apiKey) {
           supplySharePercent: formatSupplyShare(BigInt(value), supplyUnits),
         })),
       };
+      console.log(`Blockscout Top 50 holders: using ${source}.`);
       return data;
     } catch {
-      // Try the next Blockscout endpoint, then report unavailability.
+      console.warn(`Blockscout Top 50 holders: ${source} request or response parsing failed.`);
     }
   }
 
