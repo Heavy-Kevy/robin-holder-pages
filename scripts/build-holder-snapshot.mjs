@@ -310,6 +310,15 @@ function renderHolderPage(data, quote = null) {
     <p class="status">${data.totalSupply === null ? "Total supply is temporarily unavailable. Balances and wallet labels are shown below."
       : `Supply shares use <a href="${supplySource}">Blockscout’s indexed contract total supply</a>, including the balance at the burn address. Balances and supply may be indexed at different blocks.`}</p>
     <details class="status"><summary>About first-held dates and 24-hour changes</summary><p>First held is the earliest positive ROBIN receipt recorded by Blockscout, linked to its transaction. It does not mean the wallet held continuously. The 24-hour change is ROBIN received minus ROBIN sent, including transfers; it is not trading profit or loss. Unavailable means the history could not be verified completely.</p><p>${data.changeWindow ? `24-hour window (UTC): ${data.changeWindow.start} to ${data.changeWindow.end}, through block ${data.changeWindow.endBlock}.` : "The indexed 24-hour window is temporarily unavailable."} Balances may reflect a different indexing moment.</p></details>
+    <form class="holder-search" role="search" aria-label="Search the Top 50 snapshot" hidden>
+      <label for="holder-query">Search the Top 50</label>
+      <div class="holder-search-controls">
+        <input id="holder-query" type="search" placeholder="Wallet address or label" aria-describedby="holder-search-help" autocomplete="off" autocapitalize="none" spellcheck="false">
+        <button type="button" hidden>Clear</button>
+      </div>
+      <p id="holder-search-help">Paste a full or partial wallet address, or search a published label.</p>
+      <p class="holder-search-status" role="status"></p>
+    </form>
     <div class="table-region">
       <table role="table" aria-label="Top 50 ROBIN holder addresses">
         <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Rank</th><th scope="col" role="columnheader">Holder address</th><th scope="col" role="columnheader">Wallet label</th><th scope="col" role="columnheader" class="balance">Balance (ROBIN)</th><th scope="col" role="columnheader" class="balance">% of total supply</th><th scope="col" role="columnheader" class="balance">First held (UTC)</th><th scope="col" role="columnheader" class="balance">24h change (ROBIN)</th><th scope="col" role="columnheader" class="balance value">Est. value (USDG)</th></tr></thead>
@@ -343,6 +352,16 @@ function renderHolderPage(data, quote = null) {
   .status{font-size:.875rem;margin:1.1rem 0 .65rem}
   .quote{color:#c2d7c8;font-size:.875rem;margin:0 0 .75rem}
   .unavailable{padding:1rem;border:1px solid #355442;border-radius:.75rem}
+  .holder-search{margin-block:1.25rem;padding:1rem;border:1px solid #4f775e;border-radius:.75rem;background:#192c21}
+  .holder-search label{display:block;margin-bottom:.5rem;font-weight:700}
+  .holder-search-controls{display:flex;flex-wrap:wrap;gap:.5rem}
+  .holder-search :is(input,button){min-height:44px;padding:.5rem .75rem;border:1px solid #729780;border-radius:.5rem;font:inherit}
+  .holder-search input{flex:1 1 14rem;min-width:0;background:#101b16;color:#edf7ef}
+  .holder-search input::placeholder{color:#c2d7c8}
+  .holder-search button{background:#b6efaa;color:#101b16;font-weight:700;cursor:pointer}
+  .holder-search p{margin:.5rem 0 0;color:#c2d7c8;font-size:.875rem}
+  .holder-search-status:empty{margin:0}
+  .holder-search[hidden],.holder-search button[hidden],tbody tr[hidden]{display:none}
   .table-region{overflow-x:auto;border:1px solid #355442;border-radius:.75rem}
   table{width:100%;min-width:74rem;border-collapse:collapse;text-align:left;font-variant-numeric:tabular-nums}
   th,td{padding:.75rem 1rem;border-bottom:1px solid #304337;vertical-align:top}
@@ -379,6 +398,43 @@ function renderHolderPage(data, quote = null) {
   </header>
   ${content}
 </main>
+<script>
+(() => {
+  const form = document.querySelector(".holder-search");
+  const input = form.querySelector("input");
+  const clear = form.querySelector("button");
+  const status = form.querySelector('[role="status"]');
+  const holders = Array.from(document.querySelectorAll(".table-region tbody tr"), (row) => ({
+    row,
+    address: row.querySelector(".wallet").textContent.toLowerCase(),
+    label: row.querySelector(".wallet-label a")?.textContent.toLowerCase() ?? "",
+  }));
+
+  function filterHolders() {
+    const query = input.value.trim().toLowerCase();
+    let matches = 0;
+    for (const { row, address, label } of holders) {
+      const matchesQuery = address.includes(query) || label.includes(query);
+      row.hidden = !matchesQuery;
+      if (matchesQuery) matches++;
+    }
+    status.textContent = !query ? "" : matches
+      ? matches + " of " + holders.length + " holders match."
+      : "No matches in this Top 50 snapshot.";
+    clear.hidden = !input.value;
+  }
+
+  form.addEventListener("submit", (event) => event.preventDefault());
+  input.addEventListener("input", filterHolders);
+  clear.addEventListener("click", () => {
+    input.value = "";
+    filterHolders();
+    input.focus();
+  });
+  filterHolders();
+  form.hidden = false;
+})();
+</script>
 ${!quote ? quoteFallbackScript() : ""}
 </body>
 </html>`;
