@@ -293,9 +293,9 @@ function renderHolderPage(data, quote = null) {
     const usdGValue = isBurn ? "0.00" : quote ? formatRoundedUnits(units * quote.units, 36, 2) : "—";
     const share = supplySharePercent === null ? "—"
       : Number(supplySharePercent) < 0.005 ? "&lt;0.01%" : `${Number(supplySharePercent).toFixed(2)}%`;
-    return `<tr role="row">
+    return `<tr role="row" data-rank="${rank}" data-balance="${units}" data-change="${change24h ?? ""}" data-first="${firstHeldAt ?? ""}">
       <td class="rank" role="cell"><span class="mobile-label" aria-hidden="true">Rank</span>${rank}</td>
-      <th class="holder-address" scope="row" role="rowheader"><a class="wallet" href="${explorer}">${address}</a></th>
+      <th class="holder-address" scope="row" role="rowheader"><a class="wallet" href="${explorer}">${address}</a><button class="copy-address" type="button" aria-label="Copy address for rank ${rank}" hidden>Copy address</button><button class="row-details" type="button" aria-expanded="false" aria-label="Details for rank ${rank}" hidden>More details</button></th>
       <td class="wallet-label" role="cell"><span class="mobile-label" aria-hidden="true">Wallet label</span>${label ? `<a href="${label.source}">${label.name}</a>` : "—"}</td>
       <td class="balance" role="cell"><span class="mobile-label" aria-hidden="true">Balance (ROBIN)</span>${formatRoundedUnits(units, 18, 2)}</td>
       <td class="balance" role="cell"><span class="mobile-label" aria-hidden="true">% of total supply</span>${share}</td>
@@ -305,11 +305,6 @@ function renderHolderPage(data, quote = null) {
     </tr>`;
   }).join("");
   const content = `
-    <p class="status">Last updated <time datetime="${data.fetchedAt}">${data.fetchedAt.replace("T", " ").replace(/\.\d+Z$/, " UTC")}</time></p>
-    <p class="quote" aria-live="polite">${quote ? `1 ROBIN = ${quote.price} USDG via <a href="${quote.url}">${quote.name}</a>. Values are spot estimates before fees and slippage.` : `USDG estimates are temporarily unavailable. <a href="${priceSource}">View the ROBIN/USDG market</a>.`}</p>
-    <p class="status">${data.totalSupply === null ? "Total supply is temporarily unavailable. Balances and wallet labels are shown below."
-      : `Supply shares use <a href="${supplySource}">Blockscout’s indexed contract total supply</a>, including the balance at the burn address. Balances and supply may be indexed at different blocks.`}</p>
-    <details class="status"><summary>About first-held dates and 24-hour changes</summary><p>First held is the earliest positive ROBIN receipt recorded by Blockscout, linked to its transaction. It does not mean the wallet held continuously. The 24-hour change is ROBIN received minus ROBIN sent, including transfers; it is not trading profit or loss. Unavailable means the history could not be verified completely.</p><p>${data.changeWindow ? `24-hour window (UTC): ${data.changeWindow.start} to ${data.changeWindow.end}, through block ${data.changeWindow.endBlock}.` : "The indexed 24-hour window is temporarily unavailable."} Balances may reflect a different indexing moment.</p></details>
     <form class="holder-search" role="search" aria-label="Search the Top 50 snapshot" hidden>
       <label for="holder-query">Search the Top 50</label>
       <div class="holder-search-controls">
@@ -317,8 +312,26 @@ function renderHolderPage(data, quote = null) {
         <button type="button" hidden>Clear</button>
       </div>
       <p id="holder-search-help">Paste a full or partial wallet address, or search a published label.</p>
+      <label for="holder-sort">Sort by</label>
+      <select id="holder-sort">
+        <option value="rank">Holder rank</option>
+        <option value="balance-desc">Balance · highest first</option>
+        <option value="balance-asc">Balance · lowest first</option>
+        <option value="change-desc">24h change · highest first</option>
+        <option value="change-asc">24h change · lowest first</option>
+        <option value="first-asc">First held · earliest first</option>
+        <option value="first-desc">First held · newest first</option>
+      </select>
       <p class="holder-search-status" role="status"></p>
     </form>
+    <section class="wallet-summary" aria-label="Matching wallet summary" hidden></section>
+    <p class="lookup-wallet" hidden><a>View this address on Blockscout</a></p>
+    <p class="copy-status" role="status"></p>
+    <p class="status snapshot-age"><strong class="relative-age"></strong>Last updated <time datetime="${data.fetchedAt}">${data.fetchedAt.replace("T", " ").replace(/\.\d+Z$/, " UTC")}</time></p>
+    <p class="quote" aria-live="polite">${quote ? `1 ROBIN = ${quote.price} USDG via <a href="${quote.url}">${quote.name}</a>. Values are spot estimates before fees and slippage.` : `USDG estimates are temporarily unavailable. <a href="${priceSource}">View the ROBIN/USDG market</a>.`}</p>
+    <p class="status">${data.totalSupply === null ? "Total supply is temporarily unavailable. Balances and wallet labels are shown below."
+      : `Supply shares use <a href="${supplySource}">Blockscout’s indexed contract total supply</a>, including the balance at the burn address. Balances and supply may be indexed at different blocks.`}</p>
+    <details class="status"><summary>About first-held dates and 24-hour changes</summary><p>First held is the earliest positive ROBIN receipt recorded by Blockscout, linked to its transaction. It does not mean the wallet held continuously. The 24-hour change is ROBIN received minus ROBIN sent, including transfers; it is not trading profit or loss. Unavailable means the history could not be verified completely.</p><p>${data.changeWindow ? `24-hour window (UTC): ${data.changeWindow.start} to ${data.changeWindow.end}, through block ${data.changeWindow.endBlock}.` : "The indexed 24-hour window is temporarily unavailable."} Balances may reflect a different indexing moment.</p></details>
     <div class="table-region">
       <table role="table" aria-label="Top 50 ROBIN holder addresses">
         <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Rank</th><th scope="col" role="columnheader">Holder address</th><th scope="col" role="columnheader">Wallet label</th><th scope="col" role="columnheader" class="balance">Balance (ROBIN)</th><th scope="col" role="columnheader" class="balance">% of total supply</th><th scope="col" role="columnheader" class="balance">First held (UTC)</th><th scope="col" role="columnheader" class="balance">24h change (ROBIN)</th><th scope="col" role="columnheader" class="balance value">Est. value (USDG)</th></tr></thead>
@@ -386,6 +399,34 @@ function renderHolderPage(data, quote = null) {
     .mobile-label{display:block;margin-bottom:.2rem;color:#c2d7c8;font-size:.875rem}
     .rank .mobile-label{display:inline;margin:0 .35rem 0 0}
   }
+
+  [hidden]{display:none!important}
+  button,select{font:inherit}
+  .holder-search select{min-height:44px;max-width:100%;padding:.5rem .75rem;background:#101b16;color:#edf7ef;border:1px solid #729780;border-radius:.5rem}
+  .holder-search label[for="holder-sort"]{margin-top:.9rem}
+  .copy-address,.row-details{min-height:44px;margin:.5rem .5rem 0 0;padding:.4rem .65rem;border:1px solid #729780;border-radius:.5rem;background:#243b2d;color:#edf7ef;cursor:pointer}
+  .wallet{display:block}
+  .row-details{display:none}
+  .relative-age{display:block;color:#edf7ef;margin-bottom:.25rem}
+  .snapshot-age.stale .relative-age{color:#f4cca0}
+  .wallet-summary{margin:1rem 0;padding:1rem;background:#192c21;border:1px solid #729780;border-radius:.75rem}
+  .wallet-summary h2{margin:0 0 .75rem;font-size:1.15rem}
+  .wallet-summary dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem;margin:0}
+  .wallet-summary dt{font-size:.875rem;color:#c2d7c8}
+  .wallet-summary dd{margin:.25rem 0 0;overflow-wrap:anywhere}
+  .wallet-summary .mobile-label{display:none}
+  .lookup-wallet a{display:inline-flex;align-items:center;min-height:44px}
+  .copy-status:empty{display:none}
+  @media(max-width:76rem){
+    .row-details:not([hidden]){display:inline-block}
+    .has-holder-tools tbody tr:not(.expanded)>td:not(.rank):not(:nth-child(4)){display:none}
+    .has-holder-tools tbody tr>.wallet-label{display:none}
+    .has-holder-tools tbody tr.expanded>.wallet-label{display:block}
+    .has-holder-tools tbody tr>.holder-address{order:1}
+    .has-holder-tools tbody tr>.rank{order:0}
+    .has-holder-tools tbody tr>td:nth-child(4){order:2;grid-column:1/-1}
+    .has-holder-tools tbody tr>td:not(.rank):not(:nth-child(4)){order:3}
+  }
 </style>
 </head>
 <body>
@@ -403,37 +444,122 @@ function renderHolderPage(data, quote = null) {
   const form = document.querySelector(".holder-search");
   const input = form.querySelector("input");
   const clear = form.querySelector("button");
+  const sort = form.querySelector("select");
   const status = form.querySelector('[role="status"]');
-  const holders = Array.from(document.querySelectorAll(".table-region tbody tr"), (row) => ({
+  const summary = document.querySelector(".wallet-summary");
+  const lookup = document.querySelector(".lookup-wallet");
+  const tbody = document.querySelector("tbody");
+  const holders = Array.from(tbody.rows, (row) => ({
     row,
+    rank: Number(row.dataset.rank),
     address: row.querySelector(".wallet").textContent.toLowerCase(),
     label: row.querySelector(".wallet-label a")?.textContent.toLowerCase() ?? "",
   }));
 
-  function filterHolders() {
-    const query = input.value.trim().toLowerCase();
-    let matches = 0;
-    for (const { row, address, label } of holders) {
-      const matchesQuery = address.includes(query) || label.includes(query);
-      row.hidden = !matchesQuery;
-      if (matchesQuery) matches++;
-    }
-    status.textContent = !query ? "" : matches
-      ? matches + " of " + holders.length + " holders match."
-      : "No matches in this Top 50 snapshot.";
-    clear.hidden = !input.value;
+  function sortValue(field, value) {
+    if (field === "first") return value;
+    if (field === "balance") return BigInt(value);
+    const negative = value.startsWith("-");
+    const [whole, fraction = ""] = value.replace(/^-/, "").split(".");
+    const units = BigInt(whole + fraction.padEnd(18, "0"));
+    return negative ? -units : units;
   }
 
-  form.addEventListener("submit", (event) => event.preventDefault());
+  function compare(left, right) {
+    if (sort.value === "rank") return left.rank - right.rank;
+    const [field, direction] = sort.value.split("-");
+    const a = left.row.dataset[field];
+    const b = right.row.dataset[field];
+    if (!a || !b) return a ? -1 : b ? 1 : left.rank - right.rank;
+    const av = sortValue(field, a);
+    const bv = sortValue(field, b);
+    const order = av < bv ? -1 : av > bv ? 1 : 0;
+    return (direction === "asc" ? order : -order) || left.rank - right.rank;
+  }
+
+  function filterHolders() {
+    const query = input.value.trim().toLowerCase();
+    const matches = holders.filter(({ row, address, label }) => {
+      row.hidden = !(address.includes(query) || label.includes(query));
+      return !row.hidden;
+    });
+    for (const holder of [...holders].sort(compare)) tbody.append(holder.row);
+    status.textContent = !query ? "" : matches.length
+      ? matches.length + " of " + holders.length + " holders match."
+      : "No matches in this Top 50 snapshot.";
+    clear.hidden = !input.value;
+    lookup.hidden = matches.length > 0 || !/^0x[a-f0-9]{40}$/.test(query);
+    lookup.querySelector("a").href = "https://robinhoodchain.blockscout.com/address/" + query;
+    summary.replaceChildren();
+    summary.hidden = true;
+    const exact = matches.find(holder => holder.address === query);
+    if (exact) {
+      const heading = document.createElement("h2");
+      heading.textContent = "Wallet summary · rank " + exact.rank;
+      const metrics = document.createElement("dl");
+      for (const [label, index] of [["Balance (ROBIN)", 3], ["% of total supply", 4], ["24h change (ROBIN)", 6]]) {
+        const group = document.createElement("div");
+        const term = document.createElement("dt");
+        term.textContent = label;
+        const value = document.createElement("dd");
+        const cell = exact.row.cells[index].cloneNode(true);
+        cell.querySelector(".mobile-label")?.remove();
+        value.textContent = cell.textContent.trim();
+        group.append(term, value);
+        metrics.append(group);
+      }
+      summary.append(heading, metrics);
+      summary.hidden = false;
+    }
+  }
+
+  for (const { row, rank } of holders) {
+    const copy = row.querySelector(".copy-address");
+    copy.hidden = false;
+    copy.addEventListener("click", async () => {
+      const message = document.querySelector(".copy-status");
+      try {
+        await navigator.clipboard.writeText(row.querySelector(".wallet").textContent);
+        message.textContent = "Address copied for rank " + rank + ".";
+      } catch {
+        message.textContent = "Select the wallet address to copy it.";
+      }
+    });
+    const details = row.querySelector(".row-details");
+    details.hidden = false;
+    details.addEventListener("click", () => {
+      const open = row.classList.toggle("expanded");
+      details.setAttribute("aria-expanded", String(open));
+      details.textContent = open ? "Fewer details" : "More details";
+    });
+  }
+
+  function updateAge() {
+    const age = document.querySelector(".snapshot-age");
+    const timestamp = Date.parse(age.querySelector("time").dateTime);
+    const minutes = Math.floor((Date.now() - timestamp) / 60000);
+    age.classList.toggle("stale", minutes >= 120);
+    age.querySelector("strong").textContent = minutes < 0 ? "Snapshot time is ahead of this device"
+      : minutes < 1 ? "Updated just now"
+      : minutes < 60 ? "Updated " + minutes + " minutes ago"
+      : "Updated " + Math.floor(minutes / 60) + " hours ago";
+  }
+
+  form.addEventListener("submit", event => event.preventDefault());
   input.addEventListener("input", filterHolders);
+  sort.addEventListener("change", filterHolders);
   clear.addEventListener("click", () => {
     input.value = "";
     filterHolders();
     input.focus();
   });
+  document.documentElement.classList.add("has-holder-tools");
   filterHolders();
+  updateAge();
+  setInterval(updateAge, 60000);
   form.hidden = false;
 })();
+
 </script>
 ${!quote ? quoteFallbackScript() : ""}
 </body>
@@ -520,3 +646,4 @@ await Promise.all([
 console.log(`Generated ${data.holders.length} holder rows at ${data.fetchedAt}.`);
 
 }
+
