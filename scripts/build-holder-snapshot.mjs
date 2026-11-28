@@ -343,46 +343,47 @@ function renderHolderPage(data, quote = null) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1c2d">
 <meta name="description" content="Scheduled snapshot of balances for the top 50 ROBIN holder addresses on Robinhood Chain.">
 <title>Top 50 ROBIN holders</title>
 <style>
-  :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#101b16;color:#edf7ef}
+  :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#0b1c2d;color:#fff7da}
   *{box-sizing:border-box}
   body{margin:0}
   main{max-width:92rem;margin:auto;padding:clamp(1rem,4vw,3rem)}
-  header{background:#192c21;border:1px solid #355442;border-radius:1rem;padding:clamp(1.15rem,4vw,2.5rem)}
-  .chain{margin:0;color:#a9dea9;font-size:.9rem}
+  header{background:#10283d;border:1px solid #476079;border-radius:1rem;padding:clamp(1.15rem,4vw,2.5rem)}
+  .chain{margin:0;color:#d8af5c;font-size:.9rem}
   h1{margin:.35rem 0;font-size:clamp(1.9rem,6vw,3.45rem);line-height:1.05;letter-spacing:-.035em}
   p{line-height:1.5}
-  .intro,.status{color:#c2d7c8}
+  .intro,.status{color:#c4ced5}
   nav{display:flex;flex-wrap:wrap;gap:.65rem 1.25rem;margin-top:1rem}
-  a{color:#b6efaa;text-underline-offset:.22em}
-  a:hover{color:#e7ffd9}
-  :focus-visible{outline:2px solid #b6efaa;outline-offset:3px}
-  .live-link{display:inline-block;padding:.55rem .9rem;border-radius:.5rem;background:#b6efaa;color:#101b16;font-weight:700;text-decoration:none}
-  .live-link:hover{background:#e7ffd9;color:#101b16;text-decoration:underline}
+  a{color:#b5e65d;text-underline-offset:.22em}
+  a:hover{color:#fff7da}
+  :focus-visible{outline:2px solid #b5e65d;outline-offset:3px}
+  .live-link{display:inline-block;padding:.55rem .9rem;border-radius:.5rem;background:#b5e65d;color:#0b1c2d;font-weight:700;text-decoration:none}
+  .live-link:hover{background:#fff7da;color:#0b1c2d;text-decoration:underline}
   nav{align-items:center}
   .status{font-size:.875rem;margin:1.1rem 0 .65rem}
-  .quote{color:#c2d7c8;font-size:.875rem;margin:0 0 .75rem}
-  .unavailable{padding:1rem;border:1px solid #355442;border-radius:.75rem}
-  .holder-search{margin-block:1.25rem;padding:1rem;border:1px solid #4f775e;border-radius:.75rem;background:#192c21}
+  .quote{color:#c4ced5;font-size:.875rem;margin:0 0 .75rem}
+  .unavailable{padding:1rem;border:1px solid #476079;border-radius:.75rem}
+  .holder-search{margin-block:1.25rem;padding:1rem;border:1px solid #476079;border-radius:.75rem;background:#10283d}
   .holder-search label{display:block;margin-bottom:.5rem;font-weight:700}
   .holder-search-controls{display:flex;flex-wrap:wrap;gap:.5rem}
-  .holder-search :is(input,button){min-height:44px;padding:.5rem .75rem;border:1px solid #729780;border-radius:.5rem;font:inherit}
-  .holder-search input{flex:1 1 14rem;min-width:0;background:#101b16;color:#edf7ef}
-  .holder-search input::placeholder{color:#c2d7c8}
-  .holder-search button{background:#b6efaa;color:#101b16;font-weight:700;cursor:pointer}
-  .holder-search p{margin:.5rem 0 0;color:#c2d7c8;font-size:.875rem}
+  .holder-search :is(input,button){min-height:44px;padding:.5rem .75rem;border:1px solid #7e94a7;border-radius:.5rem;font:inherit}
+  .holder-search input{flex:1 1 14rem;min-width:0;background:#0b1c2d;color:#fff7da}
+  .holder-search input::placeholder{color:#c4ced5}
+  .holder-search button{background:#b5e65d;color:#0b1c2d;font-weight:700;cursor:pointer}
+  .holder-search p{margin:.5rem 0 0;color:#c4ced5;font-size:.875rem}
   .holder-search-status:empty{margin:0}
   .holder-search[hidden],.holder-search button[hidden],tbody tr[hidden]{display:none}
-  .table-region{overflow-x:auto;border:1px solid #355442;border-radius:.75rem}
+  .table-region{overflow-x:auto;border:1px solid #476079;border-radius:.75rem}
   table{width:100%;min-width:74rem;border-collapse:collapse;text-align:left;font-variant-numeric:tabular-nums}
-  th,td{padding:.75rem 1rem;border-bottom:1px solid #304337;vertical-align:top}
-  thead{background:#243b2d}
-  tbody tr:nth-child(even){background:#17251d}
+  th,td{padding:.75rem 1rem;border-bottom:1px solid #476079;vertical-align:top}
+  thead{background:#19364d}
+  tbody tr:nth-child(even){background:#0d2134}
   tbody tr:last-child>*{border-bottom:0}
   tbody th{font-weight:400}
-  td:first-child{width:4.5rem;color:#c2d7c8}
+  td:first-child{width:4.5rem;color:#c4ced5}
   .wallet{font-family:ui-monospace,monospace;overflow-wrap:anywhere}
   .balance{text-align:right;overflow-wrap:anywhere}
   .mobile-label{display:none}
@@ -391,28 +392,28 @@ function renderHolderPage(data, quote = null) {
     .table-region{border:0;overflow:visible}
     table,tbody{display:block;min-width:0}
     thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-    tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem 1rem;margin-bottom:.75rem;padding:1rem;border:1px solid #355442;border-radius:.75rem;background:#192c21}
+    tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem 1rem;margin-bottom:.75rem;padding:1rem;border:1px solid #476079;border-radius:.75rem;background:#10283d}
     tbody :is(th,td){display:block;min-width:0;padding:0;border:0;text-align:left}
     tbody .rank{width:auto;font-weight:700}
     .holder-address,.wallet-label,.rank{grid-column:1/-1}
     .holder-address{overflow-wrap:anywhere}
-    .mobile-label{display:block;margin-bottom:.2rem;color:#c2d7c8;font-size:.875rem}
+    .mobile-label{display:block;margin-bottom:.2rem;color:#c4ced5;font-size:.875rem}
     .rank .mobile-label{display:inline;margin:0 .35rem 0 0}
   }
 
   [hidden]{display:none!important}
   button,select{font:inherit}
-  .holder-search select{min-height:44px;max-width:100%;padding:.5rem .75rem;background:#101b16;color:#edf7ef;border:1px solid #729780;border-radius:.5rem}
+  .holder-search select{min-height:44px;max-width:100%;padding:.5rem .75rem;background:#0b1c2d;color:#fff7da;border:1px solid #7e94a7;border-radius:.5rem}
   .holder-search label[for="holder-sort"]{margin-top:.9rem}
-  .copy-address,.row-details{min-height:44px;margin:.5rem .5rem 0 0;padding:.4rem .65rem;border:1px solid #729780;border-radius:.5rem;background:#243b2d;color:#edf7ef;cursor:pointer}
+  .copy-address,.row-details{min-height:44px;margin:.5rem .5rem 0 0;padding:.4rem .65rem;border:1px solid #7e94a7;border-radius:.5rem;background:#19364d;color:#fff7da;cursor:pointer}
   .wallet{display:block}
   .row-details{display:none}
-  .relative-age{display:block;color:#edf7ef;margin-bottom:.25rem}
+  .relative-age{display:block;color:#fff7da;margin-bottom:.25rem}
   .snapshot-age.stale .relative-age{color:#f4cca0}
-  .wallet-summary{margin:1rem 0;padding:1rem;background:#192c21;border:1px solid #729780;border-radius:.75rem}
+  .wallet-summary{margin:1rem 0;padding:1rem;background:#10283d;border:1px solid #7e94a7;border-radius:.75rem}
   .wallet-summary h2{margin:0 0 .75rem;font-size:1.15rem}
   .wallet-summary dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem;margin:0}
-  .wallet-summary dt{font-size:.875rem;color:#c2d7c8}
+  .wallet-summary dt{font-size:.875rem;color:#c4ced5}
   .wallet-summary dd{margin:.25rem 0 0;overflow-wrap:anywhere}
   .wallet-summary .mobile-label{display:none}
   .lookup-wallet a{display:inline-flex;align-items:center;min-height:44px}
@@ -427,15 +428,37 @@ function renderHolderPage(data, quote = null) {
     .has-holder-tools tbody tr>td:nth-child(4){order:2;grid-column:1/-1}
     .has-holder-tools tbody tr>td:not(.rank):not(:nth-child(4)){order:3}
   }
+
+  @font-face{font-family:Nunito;src:url("https://ribbitpaper.com/trade/nunito-black-italic.woff2") format("woff2");font-weight:900;font-style:italic;font-display:swap}
+  :root{font-family:Arial,sans-serif}
+  body{background:radial-gradient(ellipse at 95% 0,#1c3d57 0,transparent 45%);line-height:1.65;min-height:100vh}
+  header{background:linear-gradient(130deg,#142e44,#0d2134);border-top:2px solid #d8af5c}
+  .paper-brand{display:inline-flex;align-items:center;min-height:44px;margin-bottom:.75rem;font:italic 900 1.35rem Nunito,ui-rounded,sans-serif;color:#fff7da;text-decoration:none}
+  .chain{font-size:.76rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  h1,.wallet-summary h2{font-family:Nunito,ui-rounded,sans-serif;font-style:italic;font-weight:900;line-height:1.15}
+  h1 span{color:#b5e65d}
+  nav a{display:inline-flex;align-items:center;min-height:44px}
+  .live-link,.holder-search button{background:#d8af5c;border-color:#d8af5c;color:#0b1c2d}
+  .live-link:hover,.holder-search button:hover{background:#fff7da;color:#0b1c2d}
+  .holder-search,.wallet-summary{background:linear-gradient(130deg,#142e44,#0d2134);border-top:2px solid #d8af5c}
+  .holder-search input,.holder-search select{border-color:#7e94a7}
+  .wallet-summary h2{color:#fff7da}
+  .row-details,.copy-address{border-color:#d8af5c}
+  .row-details:hover,.copy-address:hover{background:#24465e}
+  .rank{color:#d8af5c!important}
+  .snapshot-age .relative-age{color:#b5e65d}
+  .snapshot-age.stale .relative-age{color:#f4cca0}
+  .status summary{color:#d8af5c}
+  @media(max-width:76rem){.has-holder-tools tbody tr{border-top:2px solid #d8af5c}}
 </style>
 </head>
 <body>
 <main>
   <header>
-    <p class="chain">Robinhood Chain</p>
-    <h1>Top 50 ROBIN holders</h1>
+    <a class="paper-brand" href="https://ribbitpaper.com/">The Ribbit Paper</a><p class="chain">Robinhood Chain · Holder snapshot</p>
+    <h1>Top 50 <span>ROBIN</span> holders</h1>
     <p class="intro">Wallet and contract addresses ranked by token balance. This snapshot is scheduled to refresh hourly.</p>
-    <nav aria-label="Data sources"><a class="live-link" href="${holdersPage}">View live on Blockscout</a><a href="./holders.json">Raw JSON</a></nav>
+    <nav aria-label="Data sources"><a class="live-link" href="${holdersPage}">View live on Blockscout</a><a href="https://ribbitpaper.com/rh-trends/">RH Trends</a><a href="./holders.json">Raw JSON</a></nav>
   </header>
   ${content}
 </main>
